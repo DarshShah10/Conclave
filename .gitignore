@@ -47,3 +47,4 @@ configs/api_config.json
 Thumbs.db
 .vscode/
 .idea/
+*.pt
