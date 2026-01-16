@@ -1,0 +1,26 @@
+{
+    "gpt-5-mini": {
+        "api_key": "",
+        "qpm": 3
+    },
+    "text-embedding-3-large": {
+        "api_key": "",
+        "qpm": 3
+    },
+    "gemini-2.5-flash-lite": {
+        "base_url": "",
+        "api_key": "",
+        "qpm": 3
+    },
+    "qdrant": {
+        "url": "",
+        "api_key": ""
+    },
+     "neo4j": {
+        "uri": "",
+        "user": "",
+        "password": ""
+    }
+}
+
+
