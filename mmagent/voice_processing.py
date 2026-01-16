@@ -30,11 +30,11 @@ MAX_RETRIES = processing_config["max_retries"]
 with open("configs/api_config.json") as f:
     q_conf = json.load(f)["qdrant"]
 
-q_client = QdrantClient(
-    url=q_conf["url"],
-    api_key=q_conf["api_key"]
-)
-id_manager = IdentityManager(q_client)
+# q_client = QdrantClient(
+#     url=q_conf["url"],
+#     api_key=q_conf["api_key"]
+# )
+# id_manager = IdentityManager(q_client)
 # ---------------------------------------
 
 
@@ -163,13 +163,13 @@ def process_voices(video_graph, base64_audio, base64_video, save_path, preproces
 
         for audio in audios:
             emb = audio["embedding"]
-
             audio_info = {
                 "embeddings": [emb],
                 "contents": [audio["asr"]],
             }
 
-            global_id = id_manager.resolve_identity(
+            # Use the manager attached to the video_graph (the engine)
+            global_id = video_graph.id_manager.resolve_identity(
                 emb, collection_name="voice_memories"
             )
 
@@ -178,7 +178,8 @@ def process_voices(video_graph, base64_audio, base64_video, save_path, preproces
                 video_graph.update_node(matched_node, audio_info)
             else:
                 matched_node = video_graph.add_voice_node(audio_info)
-                id_manager.register_identity(
+                # Register the new identity
+                video_graph.id_manager.register_identity(
                     embedding=emb,
                     identity_id=matched_node,
                     collection_name="voice_memories",

@@ -19,6 +19,10 @@ from mmagent.utils.video_processing import process_video_clip
 from mmagent.identity_manager import IdentityManager
 from qdrant_client import QdrantClient
 
+os.environ['ONNXRUNTIME_DEVICE_DISCOVERY_DISABLED'] = '1'
+os.environ['ORT_LOGGING_LEVEL'] = '3' 
+
+
 gc.collect()
 torch.cuda.empty_cache()
 
@@ -28,15 +32,15 @@ processing_config = json.load(open("configs/processing_config.json"))
 with open("configs/api_config.json") as f:
     q_conf = json.load(f)["qdrant"]
 
-q_client = QdrantClient(
-    url=q_conf["url"],
-    api_key=q_conf["api_key"]
-)
+# q_client = QdrantClient(
+#     url=q_conf["url"],
+#     api_key=q_conf["api_key"]
+# )
 
-id_manager = IdentityManager(q_client)
+# id_manager = IdentityManager(q_client)
 
-face_app = FaceAnalysis(name="buffalo_l")
-face_app.prepare(ctx_id=-1)
+face_app = FaceAnalysis(name="buffalo_l", providers=['CUDAExecutionProvider', 'CPUExecutionProvider'])
+face_app.prepare(ctx_id=0, det_size=(640, 640))
 
 logger = logging.getLogger(__name__)
 cluster_size = processing_config["cluster_size"]
@@ -157,14 +161,13 @@ def process_faces(video_graph, base64_frames, save_path, preprocessing=[]):
 
             primary_face = faces[0]
             face_emb = primary_face["face_emb"]
-
             face_info = {
                 "embeddings": [f["face_emb"] for f in faces],
                 "contents": [f["extra_data"]["face_base64"] for f in faces],
             }
 
-            # 🔍 Global identity lookup
-            global_id = id_manager.resolve_identity(
+            # Use the manager attached to the video_graph (the engine)
+            global_id = video_graph.id_manager.resolve_identity(
                 face_emb, collection_name="face_memories"
             )
 
@@ -173,7 +176,8 @@ def process_faces(video_graph, base64_frames, save_path, preprocessing=[]):
                 video_graph.update_node(matched_node, face_info)
             else:
                 matched_node = video_graph.add_img_node(face_info)
-                id_manager.register_identity(
+                # Register the new identity
+                video_graph.id_manager.register_identity(
                     embedding=face_emb,
                     identity_id=matched_node,
                     collection_name="face_memories",

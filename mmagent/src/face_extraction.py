@@ -81,11 +81,11 @@ def extract_faces(face_app, image_list, num_workers=1):
             return []
 
     indexed_inputs = list(enumerate(image_list))
-
+    
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        for frame_faces in tqdm(
-            executor.map(process_image, indexed_inputs), total=len(image_list)
-        ):
+        # Use list() to force execution of the map
+        results = list(executor.map(process_image, indexed_inputs))
+        for frame_faces in results:
             faces.extend(frame_faces)
 
     return faces
